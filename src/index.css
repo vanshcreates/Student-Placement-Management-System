@@ -1,0 +1,39 @@
+@import "tailwindcss";
+:root {
+  --pine: #12372A;
+  --chalk: #F2F4EC;
+  --paper: #FFFFFF;
+  --marigold: #F2B84B;
+  --ink: #1B1F1D;
+  --moss: #5E7A5F;
+
+  --border: 2px solid var(--ink);
+  --shadow-hard: 4px 4px 0 var(--ink);
+  --radius: 8px;
+}
+*{
+  background: transparent;
+}
+body{
+  background-color: var(--chalk);
+}
+
+
+body { font-family: 'Instrument Sans', system-ui, sans-serif; font-size: 16px; line-height: 1.55; color: var(--ink); }
+h1, h2, h3 { font-family: 'Bricolage Grotesque', system-ui, sans-serif; color: var(--pine); }
+table, .stat { font-variant-numeric: tabular-nums; }
+.green-bg-container {
+  background-color: var(--pine); 
+}
+.chalk-bg-container {
+  background-color: var(--chalk); 
+}
+input,button{
+  background-color: var(--chalk);
+  border-color: var(--marigold);
+  border: var(--border);
+  border-radius: var(--radius);
+} 
+._login{
+  color: var(--chalk);
+}
