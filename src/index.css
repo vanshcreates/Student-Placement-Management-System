@@ -28,6 +28,15 @@ table, .stat { font-variant-numeric: tabular-nums; }
 .chalk-bg-container {
   background-color: var(--chalk); 
 }
+.red-bg-container {
+  background-color: rgba(100, 0, 0, 0.863); 
+}
+.moss-bg-container {
+  background-color: var(--moss); 
+}
+.gray-bg-container {
+  background-color: rgb(200, 200, 200); 
+}
 input,button{
   background-color: var(--chalk);
   border-color: var(--marigold);
@@ -36,4 +45,25 @@ input,button{
 } 
 ._login{
   color: var(--chalk);
+}
+.green{
+  color: var(--pine);
+}
+.moss{
+  color: var(--moss);
+}
+.chalk{
+  color: var(--chalk);
+}
+.studentnav a:hover{
+color: var(--ink);
+}
+.border{
+  border: var(--border);
+}
+.green-border{
+  border: 2px solid var(--pine);
+}
+.gold-border{
+  border: 2px solid var(--marigold);
 }
