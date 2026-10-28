@@ -5,6 +5,9 @@ const {
   getDrives,
   getApplications,
   updateApplicationStatus,
+  deleteStudent,
+  deleteCompany,
+  deleteDrive,
   createCompany,
   createDrive,
   getAnnouncements,
@@ -20,6 +23,9 @@ router.get('/drives', getDrives);
 router.get('/applications', getApplications);
 router.get('/announcements', getAnnouncements);
 router.patch('/applications/:applicationId/status', updateApplicationStatus);
+router.delete('/students/:studentId', deleteStudent);
+router.delete('/companies/:companyId', deleteCompany);
+router.delete('/drives/:driveId', deleteDrive);
 router.post('/companies', createCompany);
 router.post('/drives', createDrive);
 

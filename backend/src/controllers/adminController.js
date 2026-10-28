@@ -73,6 +73,131 @@ exports.updateApplicationStatus = async (req, res) => {
   }
 };
 
+exports.deleteStudent = async (req, res) => {
+  const session = await User.startSession();
+
+  try {
+    let result;
+    await session.withTransaction(async () => {
+      const student = await User.findOne({
+        _id: req.params.studentId,
+        role: 'student',
+      }).session(session);
+
+      if (!student) {
+        result = null;
+        return;
+      }
+
+      const applications = await Application.deleteMany(
+        { studentId: student._id },
+        { session },
+      );
+      await student.deleteOne({ session });
+      result = { deletedApplications: applications.deletedCount };
+    });
+
+    if (!result) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    return res.status(200).json({
+      message: 'Student and their applications deleted',
+      ...result,
+    });
+  } catch (error) {
+    if (error.name === 'CastError') {
+      return res.status(400).json({ message: 'Invalid student ID' });
+    }
+    return res.status(500).json({ message: 'Failed to delete student', error: error.message });
+  } finally {
+    await session.endSession();
+  }
+};
+
+exports.deleteCompany = async (req, res) => {
+  const session = await Company.startSession();
+
+  try {
+    let result;
+    await session.withTransaction(async () => {
+      const company = await Company.findById(req.params.companyId).session(session);
+      if (!company) {
+        result = null;
+        return;
+      }
+
+      const drives = await Drive.find({ company: company.name })
+        .select('_id')
+        .session(session);
+      const driveIds = drives.map((drive) => drive._id);
+      const applications = driveIds.length
+        ? await Application.deleteMany({ driveId: { $in: driveIds } }, { session })
+        : { deletedCount: 0 };
+      await Drive.deleteMany({ company: company.name }, { session });
+      await company.deleteOne({ session });
+      result = {
+        deletedDrives: drives.length,
+        deletedApplications: applications.deletedCount,
+      };
+    });
+
+    if (!result) {
+      return res.status(404).json({ message: 'Company not found' });
+    }
+
+    return res.status(200).json({
+      message: 'Company and related drives and applications deleted',
+      ...result,
+    });
+  } catch (error) {
+    if (error.name === 'CastError') {
+      return res.status(400).json({ message: 'Invalid company ID' });
+    }
+    return res.status(500).json({ message: 'Failed to delete company', error: error.message });
+  } finally {
+    await session.endSession();
+  }
+};
+
+exports.deleteDrive = async (req, res) => {
+  const session = await Drive.startSession();
+
+  try {
+    let result;
+    await session.withTransaction(async () => {
+      const drive = await Drive.findById(req.params.driveId).session(session);
+      if (!drive) {
+        result = null;
+        return;
+      }
+
+      const applications = await Application.deleteMany(
+        { driveId: drive._id },
+        { session },
+      );
+      await drive.deleteOne({ session });
+      result = { deletedApplications: applications.deletedCount };
+    });
+
+    if (!result) {
+      return res.status(404).json({ message: 'Placement drive not found' });
+    }
+
+    return res.status(200).json({
+      message: 'Placement drive and related applications deleted',
+      ...result,
+    });
+  } catch (error) {
+    if (error.name === 'CastError') {
+      return res.status(400).json({ message: 'Invalid placement drive ID' });
+    }
+    return res.status(500).json({ message: 'Failed to delete placement drive', error: error.message });
+  } finally {
+    await session.endSession();
+  }
+};
+
 exports.createCompany = async (req, res) => {
   try {
     const company = await Company.create(req.body);

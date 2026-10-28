@@ -8,6 +8,7 @@ import {
   LogOut,
   Plus,
   Search,
+  Trash2,
   Users,
 } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
@@ -23,7 +24,16 @@ const navigation = [
 
 const AdminPanel = ({ onLogout }) => {
   const [activeView, setActiveView] = useState("Dashboard");
-  const { students, companies, drives, applications, updateApplicationStatus } = useContext(AuthContext);
+  const {
+    students,
+    companies,
+    drives,
+    applications,
+    updateApplicationStatus,
+    deleteStudent,
+    deleteCompany,
+    deleteDrive,
+  } = useContext(AuthContext);
 
   const showAddForm = (tab) => setActiveView(`Add ${tab}`);
   const isAddView = activeView.startsWith("Add ") || activeView === "Create Drive";
@@ -116,7 +126,7 @@ const AdminPanel = ({ onLogout }) => {
             onNavigate={setActiveView}
           />
         ) : activeView === "Students" ? (
-          <StudentsList students={students} />
+          <StudentsList students={students} onDelete={deleteStudent} />
         ) : activeView === "Applications" ? (
           <ApplicationsList
             applications={applications}
@@ -124,9 +134,9 @@ const AdminPanel = ({ onLogout }) => {
             onStatusChange={updateApplicationStatus}
           />
         ) : activeView === "Companies" ? (
-          <CompaniesList companies={companies} />
+          <CompaniesList companies={companies} onDelete={deleteCompany} />
         ) : activeView === "Placement Drives" ? (
-          <DrivesList drives={drives} />
+          <DrivesList drives={drives} onDelete={deleteDrive} />
         ) : null}
       </main>
     </div>
@@ -180,7 +190,7 @@ const DashboardOverview = ({ students, companies, drives, onNavigate }) => (
   </div>
 );
 
-const StudentsList = ({ students }) => {
+const StudentsList = ({ students, onDelete }) => {
   const [search, setSearch] = useState("");
   const searchTerm = search.trim().toLowerCase();
   const filteredStudents = students.filter((student) =>
@@ -217,6 +227,11 @@ const StudentsList = ({ students }) => {
           student.batch || student.year || "—",
           student.cgpa ?? "—",
         ])}
+        records={filteredStudents}
+        onDelete={onDelete}
+        deletePrompt={(student) =>
+          `Delete ${student.name}? Their placement applications will also be deleted.`
+        }
       />
     </section>
   );
@@ -351,7 +366,7 @@ const ApplicationsList = ({ applications, companies, onStatusChange }) => {
   );
 };
 
-const CompaniesList = ({ companies }) => (
+const CompaniesList = ({ companies, onDelete }) => (
   <DataTable
     title="Placement Companies"
     emptyMessage="No companies have been added yet."
@@ -364,10 +379,15 @@ const CompaniesList = ({ companies }) => (
       company.location || "—",
       company.package ? `${company.package} LPA` : "—",
     ])}
+    records={companies}
+    onDelete={onDelete}
+    deletePrompt={(company) =>
+      `Delete ${company.name}? Its placement drives and applications for those drives will also be deleted.`
+    }
   />
 );
 
-const DrivesList = ({ drives, compact = false }) => (
+const DrivesList = ({ drives, compact = false, onDelete }) => (
   <DataTable
     title={compact ? "Placement Drives" : "Published Placement Drives"}
     emptyMessage="No placement drives published yet. Create a drive to share it with students."
@@ -381,35 +401,85 @@ const DrivesList = ({ drives, compact = false }) => (
       drive.deadline || "—",
       drive.status || "Active",
     ])}
+    records={drives}
+    onDelete={onDelete}
+    deletePrompt={(drive) =>
+      `Delete the ${drive.company} - ${drive.role} drive? Applications submitted to this drive will also be deleted.`
+    }
   />
 );
 
-const DataTable = ({ title, headers, rows, emptyMessage }) => (
-  <section className="overflow-hidden rounded-2xl border bg-white shadow-sm">
-    <div className="border-b px-5 py-4">
-      <h3 className="font-bold text-[#103d2c]">{title}</h3>
-      <p className="mt-1 text-sm text-gray-500">{rows.length} records</p>
-    </div>
-    {rows.length === 0 ? (
-      <EmptyState message={emptyMessage} />
-    ) : (
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[700px] text-left text-sm">
-          <thead className="bg-gray-50 text-xs uppercase text-gray-500">
-            <tr>{headers.map((header) => <th key={header} className="px-5 py-3 font-semibold">{header}</th>)}</tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {rows.map((row, index) => (
-              <tr key={`${row[0]}-${index}`} className="hover:bg-gray-50">
-                {row.map((cell, cellIndex) => <td key={cellIndex} className="px-5 py-4 text-gray-700">{cell}</td>)}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+const DataTable = ({ title, headers, rows, emptyMessage, records, onDelete, deletePrompt }) => {
+  const [deleteError, setDeleteError] = useState("");
+  const [deletingId, setDeletingId] = useState("");
+
+  const handleDelete = async (record) => {
+    if (!window.confirm(deletePrompt(record))) return;
+    setDeleteError("");
+    setDeletingId(record.id);
+    try {
+      await onDelete(record.id);
+    } catch (error) {
+      setDeleteError(error.message);
+    } finally {
+      setDeletingId("");
+    }
+  };
+
+  return (
+    <section className="overflow-hidden rounded-2xl border bg-white shadow-sm">
+      <div className="border-b px-5 py-4">
+        <h3 className="font-bold text-[#103d2c]">{title}</h3>
+        <p className="mt-1 text-sm text-gray-500">{rows.length} records</p>
       </div>
-    )}
-  </section>
-);
+      {deleteError && (
+        <p role="alert" className="m-4 rounded-lg bg-red-50 p-3 text-sm text-red-800">
+          {deleteError}
+        </p>
+      )}
+      {rows.length === 0 ? (
+        <EmptyState message={emptyMessage} />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[700px] text-left text-sm">
+            <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+              <tr>
+                {headers.map((header) => <th key={header} className="px-5 py-3 font-semibold">{header}</th>)}
+                {onDelete && <th className="px-5 py-3 font-semibold">Actions</th>}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {rows.map((row, index) => {
+                const record = records[index];
+                return (
+                  <tr key={record?.id || `${row[0]}-${index}`} className="hover:bg-gray-50">
+                    {row.map((cell, cellIndex) => (
+                      <td key={cellIndex} className="px-5 py-4 text-gray-700">{cell}</td>
+                    ))}
+                    {onDelete && (
+                      <td className="px-5 py-4">
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(record)}
+                          disabled={deletingId === record.id}
+                          className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
+                          aria-label={`Delete ${record.name || record.company || "record"}`}
+                        >
+                          <Trash2 size={16} />
+                          {deletingId === record.id ? "Deleting..." : "Delete"}
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+};
 
 const EmptyState = ({ message }) => (
   <p className="p-8 text-center text-sm text-gray-500">{message}</p>

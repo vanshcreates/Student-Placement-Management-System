@@ -57,11 +57,17 @@ export const api = {
   adminStudents: async () => (await request("/admin/students")).map(normalizeRecord),
   createStudent: (student) =>
     request("/auth/students", { method: "POST", body: student }),
+  deleteStudent: (studentId) =>
+    request(`/admin/students/${encodeURIComponent(studentId)}`, { method: "DELETE" }),
   adminCompanies: async () => (await request("/admin/companies")).map(normalizeRecord),
   studentCompanies: async () => (await request("/student/companies")).map(normalizeRecord),
   createCompany: (company) =>
     request("/admin/companies", { method: "POST", body: company }),
+  deleteCompany: (companyId) =>
+    request(`/admin/companies/${encodeURIComponent(companyId)}`, { method: "DELETE" }),
   adminDrives: async () => (await request("/admin/drives")).map(normalizeRecord),
+  deleteDrive: (driveId) =>
+    request(`/admin/drives/${encodeURIComponent(driveId)}`, { method: "DELETE" }),
   adminApplications: async () =>
     (await request("/admin/applications")).map((application) => ({
       ...normalizeRecord(application),

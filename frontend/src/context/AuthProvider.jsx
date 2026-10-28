@@ -120,13 +120,28 @@ const AuthProvider = ({ children }) => {
     await refreshData();
   };
 
+  const deleteStudent = async (studentId) => {
+    await api.deleteStudent(studentId);
+    await refreshData();
+  };
+
   const addCompany = async (company) => {
     await api.createCompany(company);
     await refreshData();
   };
 
+  const deleteCompany = async (companyId) => {
+    await api.deleteCompany(companyId);
+    await refreshData();
+  };
+
   const addDrive = async (drive) => {
     await api.createDrive(drive);
+    await refreshData();
+  };
+
+  const deleteDrive = async (driveId) => {
+    await api.deleteDrive(driveId);
     await refreshData();
   };
 
@@ -151,8 +166,11 @@ const AuthProvider = ({ children }) => {
         logout,
         refreshData,
         addStudent,
+        deleteStudent,
         addCompany,
+        deleteCompany,
         addDrive,
+        deleteDrive,
         updateApplicationStatus,
         applyToDrive,
       }}
